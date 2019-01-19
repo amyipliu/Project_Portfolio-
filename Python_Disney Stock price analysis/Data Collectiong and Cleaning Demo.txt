@@ -1,0 +1,76 @@
+Considering cumbersome process of merging Data set and Data Cleaning, 
+we disclose all realted Data Cleaning prior to man Data Analysis process presented in Jupytor Notebook in this file as reference.
+All data used in the Analysis process were extracted from these method.
+
+----------------------------------------------------------------------------------------------------------------------------------
+######## Concat All Compaines ########
+
+def build_stock_df(company_tickers):
+    columns = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Company_name', 'Company_ticker', 'Field', 'Dis_dep']
+    ldfs = []
+    for (ticker, company_name, field, dis_dep) in zip(company_tickers, company_names, fields, dis_deps):
+        file_name = ticker + ' Historical Prices.csv'
+        company_frame = pd.read_csv(file_name, index_col = False, skiprows= [0], parse_dates= ['Date'])
+        company_frame['Company_ticker'] = ticker
+        company_frame['Company_name']= company_name
+        company_frame['Field'] = field
+        company_frame['Dis_category'] = dis_dep
+        ldfs.append(company_frame)
+    return(pd.concat(ldfs, ignore_index=True))
+
+company_tickers = ['FOXA', 'AMZN', 'AMCX', 'AAL', 'T', 'BOALF', 'BT', 'CBS', 'FUN', 'CCO', 'KO', 'CMCSA', 'DISCA', \
+                   'EA', 'FL', 'GLOB', 'GOOGL', 'HSY', 'IMAX', 'K', 'MCD', 'MSFT', 'NFLX', 'NKE', 'NOK', 'PM', 'PHG', 'PTSXQ', 'SEAS', 'SBGI',\
+                   'SIX', 'SNE', 'SBUX', 'TGT', 'TWX', 'TSN', 'VZ', 'VIAB', 'NVDA', 'INTC', 'AMD', 'DIS']
+company_names = ['21st Century Fox', 'Amazon', 'AMC Networks Inc ', 'America Airline', 'AT&T', 'Boral Ltd', 'BT Group', 'CBS ', 'Cedar Fair Entertainment Company', \
+                 'Clear Channel Outdoor Holdings Inc', 'Coca-Cola', 'Comcast', 'Discovery Communications Inc ', 'Electronic Arts Inc', \
+                 'Footlocker', 'Globant', 'Google', 'Hershey ', 'Imax Corp ', 'Kelloggs', "McDonald's", 'Microsoft', 'Netflix', 'Nike', \
+                 'Nokia', 'Philip Morris', 'Philips_NV_ADR', 'Point.360', 'SeaWorld Parks & Entertainment', 'Sinclair Broadcast Group Inc', \
+                 'Six Flags Entertainment Corporation', 'Sony', 'Starbucks', 'Target', 'Time Warner', 'Tyson Foods', 'Verizon ', 'Viacom', \
+                 'Nvidia', 'Intel', 'AMD', 'Disney']
+fields = ['Studio', 'Consumer Product', 'Studio', 'Transportation', 'Telecom Services', 'Construction', 'Telecom Services', 'Media'\
+          , 'Parks', 'Media', 'Consumer Product', 'Studio', 'Media', 'Gaming', 'Consumer Product', 'Information Technology Service',\
+          'Internet Content & Information', 'Consumer Product', 'Media ', 'Consumer Product', 'Resort', 'Software - Infrastructure',\
+          'Media', 'Consumer Product', 'Communication Equipment', 'Consumer Product', 'Consumer Product', 'Media', 'Parks', 'Media',\
+          'Parks', 'Studio', 'Consumer Product', 'Consumer Product', 'Studio', 'Consumer Product', 'Media', 'Studio', 'Gaming',\
+          'Gaming', 'Gaming', 'Disney']
+dis_deps = ['Studio Entertainment', 'Consumer Products & Interactive Media', 'Studio Entertainment', 'Parks and Resorts',\
+           'Media Networks', 'Parks and Resorts', 'Media Networks', 'Media Networks', 'Parks and Resorts', 'Media Networks',\
+           'Consumer Products & Interactive Media', 'Studio Entertainment', 'Media Networks', \
+           'Consumer Products & Interactive Media', 'Consumer Products & Interactive Media', 'Media Networks', 'Media Networks',\
+           'Consumer Products & Interactive Media', 'Media Networks', 'Consumer Products & Interactive Media',\
+           'Parks and Resorts', 'Media Networks', 'Media Networks', 'Consumer Products & Interactive Media',\
+           'Consumer Products & Interactive Media', 'Consumer Products & Interactive Media', \
+           'Consumer Products & Interactive Media', 'Media Networks', 'Parks and Resorts', 'Media Networks',\
+           'Parks and Resorts', 'Studio Entertainment', 'Consumer Products & Interactive Media',\
+           'Consumer Products & Interactive Media', 'Studio Entertainment', 'Consumer Products & Interactive Media',\
+           'Media Networks', 'Studio Entertainment', 'Consumer Products & Interactive Media',\
+           'Consumer Products & Interactive Media', 'Consumer Products & Interactive Media', 'Disney']
+company_stock = build_stock_df(company_tickers)
+
+
+
+
+######## Transfer Volumn to float ########
+
+company_stock["Volume"] = company_stock.Volume.apply(lambda x: float(x.replace("�", "0").replace(",","").replace('???','0')))
+
+
+######## Replace space to _ ########
+
+columns = ['Company_name','Field','Dis_category']
+for c in columns:
+    company_stock[c] = company_stock[c].str.replace('\s+', '_')
+    
+
+######## Generate return column ##########
+close_px = company_stock['Close']#assign close price 
+close_px.shift(-1)
+rets = close_px / close_px.shift(-1) - 1 #obtain the daily rate of return
+rets.head()
+company_stock['Rate_of_Return'] = rets #add rets to df as a column
+company_stock.head()
+
+
+
+####### Write to CSV ##########
+company_stock.to_csv('company_stock.csv', index= False)
